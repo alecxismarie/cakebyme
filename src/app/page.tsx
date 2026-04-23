@@ -85,9 +85,6 @@ const CANDLE_COLOR_OPTIONS: Array<AddOns["candleColor"]> = [
   "yellow",
 ];
 
-const FORMSPREE_ENDPOINT =
-  process.env.NEXT_PUBLIC_FORMSPREE_ENDPOINT?.trim() ?? "";
-
 const INITIAL_STATE: OrderFormData = {
   orderType: "",
   flavor: "",
@@ -163,10 +160,12 @@ function validateOrder(data: OrderFormData): Record<string, string> {
     errors.mobileNumber = "Mobile number looks too short.";
   }
 
-  if (data.email.trim()) {
+  if (!data.email.trim()) {
+    errors.email = "Email is required for order confirmation.";
+  } else {
     const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim());
     if (!isValidEmail) {
-      errors.email = "Enter a valid email or leave it blank.";
+      errors.email = "Enter a valid email address.";
     }
   }
 
@@ -226,6 +225,23 @@ function ChoiceCard({
   );
 }
 
+function formatTimeForSummary(timeValue: string): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(timeValue.trim());
+  if (!match) {
+    return timeValue;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = match[2];
+  if (!Number.isFinite(hours) || hours < 0 || hours > 23) {
+    return timeValue;
+  }
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${hour12}:${minutes} ${period}`;
+}
+
 export default function Home() {
   const [formData, setFormData] = useState<OrderFormData>(INITIAL_STATE);
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -233,7 +249,6 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState<{
-    reference: string;
     message: string;
   } | null>(null);
   const [addOnPickerOpen, setAddOnPickerOpen] = useState({
@@ -303,44 +318,6 @@ export default function Home() {
     setIsSubmitting(true);
 
     try {
-      if (FORMSPREE_ENDPOINT) {
-        const response = await fetch(FORMSPREE_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            ...formData,
-            source: "cake-by-me-order-form",
-          }),
-        });
-
-        const formspreePayload = (await response
-          .json()
-          .catch(() => null)) as
-          | {
-              errors?: Array<{ message?: string }>;
-              error?: string;
-            }
-          | null;
-
-        if (!response.ok) {
-          const failureMessage =
-            formspreePayload?.errors?.[0]?.message ??
-            formspreePayload?.error ??
-            "Unable to submit your order.";
-          throw new Error(failureMessage);
-        }
-
-        setSubmitSuccess({
-          reference: "Formspree",
-          message:
-            "Order request sent. We will confirm availability with you shortly.",
-        });
-        return;
-      }
-
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: {
@@ -363,10 +340,8 @@ export default function Home() {
       }
 
       setSubmitSuccess({
-        reference: payload.reference ?? "Pending",
         message:
-          payload.message ??
-          "Order received. We will confirm availability with you shortly.",
+          "Thank you! We’ve received your order request. Please expect a confirmation from us shortly.",
       });
     } catch (error) {
       setSubmitError(
@@ -445,7 +420,7 @@ export default function Home() {
       items.push(`Preferred date: ${formData.preferredDate}`);
     }
     if (formData.preferredTime) {
-      items.push(`Preferred time: ${formData.preferredTime}`);
+      items.push(`Preferred time: ${formatTimeForSummary(formData.preferredTime)}`);
     }
 
     return items;
@@ -1061,7 +1036,7 @@ export default function Home() {
                     htmlFor="email"
                     className="text-sm font-semibold text-[#6e3e58]"
                   >
-                    Email (optional)
+                    Email (required)
                   </label>
                   <input
                     id="email"
@@ -1155,7 +1130,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label
                     htmlFor="preferredDate"
                     className="text-sm font-semibold text-[#6e3e58]"
@@ -1174,7 +1149,7 @@ export default function Home() {
                       }))
                     }
                     onBlur={() => markTouched("preferredDate")}
-                    className="mt-2 w-full rounded-xl border border-[#f1dce4] bg-white px-3 py-2 text-sm text-[#5f4454] shadow-sm outline-none transition focus:border-[#dc7d9b] focus:ring-2 focus:ring-[#f8cad8]"
+                    className="mt-2 block w-full max-w-full min-w-0 rounded-xl border border-[#f1dce4] bg-white px-3 py-2 text-sm text-[#5f4454] shadow-sm outline-none transition focus:border-[#dc7d9b] focus:ring-2 focus:ring-[#f8cad8]"
                   />
                   {shouldShowError("preferredDate") && (
                     <p className="mt-1 text-sm text-[#be3f62]" role="alert">
@@ -1183,7 +1158,7 @@ export default function Home() {
                   )}
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <label
                     htmlFor="preferredTime"
                     className="text-sm font-semibold text-[#6e3e58]"
@@ -1201,7 +1176,7 @@ export default function Home() {
                       }))
                     }
                     onBlur={() => markTouched("preferredTime")}
-                    className="mt-2 w-full rounded-xl border border-[#f1dce4] bg-white px-3 py-2 text-sm text-[#5f4454] shadow-sm outline-none transition focus:border-[#dc7d9b] focus:ring-2 focus:ring-[#f8cad8]"
+                    className="mt-2 block w-full max-w-full min-w-0 rounded-xl border border-[#f1dce4] bg-white px-3 py-2 text-sm text-[#5f4454] shadow-sm outline-none transition focus:border-[#dc7d9b] focus:ring-2 focus:ring-[#f8cad8]"
                   />
                   {shouldShowError("preferredTime") && (
                     <p className="mt-1 text-sm text-[#be3f62]" role="alert">
@@ -1265,9 +1240,6 @@ export default function Home() {
                 <div className="mt-4 rounded-xl border border-[#cde8d8] bg-[#f1fff7] px-3 py-3 text-sm text-[#2e6b4c]">
                   <p className="font-semibold">Order request submitted.</p>
                   <p className="mt-1">{submitSuccess.message}</p>
-                  <p className="mt-1 text-xs">
-                    Reference: <span className="font-semibold">{submitSuccess.reference}</span>
-                  </p>
                 </div>
               )}
 
