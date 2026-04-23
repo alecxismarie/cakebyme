@@ -457,10 +457,10 @@ export default function Home() {
         <section className="rounded-3xl border border-[#f2dbe4] bg-[#fff4f7] p-6 shadow-sm sm:p-8">
           <h1 className="sr-only">{PAGE_COPY.brand}</h1>
           <Image
-            src="/cakebymelogo1.png"
+            src="/cbmlogo.png"
             alt="Cake by Me logo"
-            width={1042}
-            height={527}
+            width={1536}
+            height={1024}
             className="mx-auto h-auto w-full max-w-[260px]"
           />
           <p className="mx-auto mt-3 max-w-2xl text-center text-base leading-7 text-[#7a5867] sm:mx-0 sm:text-left sm:text-lg">

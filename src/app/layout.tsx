@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   title: "Cake by Me",
   description: "DIY treats",
   icons: {
-    icon: "/faviconcb.png?v=cb1",
-    shortcut: "/faviconcb.png?v=cb1",
-    apple: "/faviconcb.png?v=cb1",
+    icon: "/faviconcb.png?v=cb2",
+    shortcut: "/faviconcb.png?v=cb2",
+    apple: "/faviconcb.png?v=cb2",
   },
 };
 
